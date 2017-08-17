@@ -72,7 +72,13 @@ Web-App Flow
 
 			- Click Submit button and if call is successful to the server, it shows that the feedback has been submitted.
 
+Running the Module
 
+	- Go to the root directory of FullStackChallenge and run the command in terminal
+	- mvn spring-boot:run
+	- And open localhost:8080 in the browser
+
+	NOTE: All the frameworks should be present on the system before running the module.
 
 
 

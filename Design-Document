@@ -1,0 +1,83 @@
+The basic design of the webapp goes as follows: 
+
+	DATABASE (DATA MODEL)   ----    Storing the Employee details and their reviews   
+	WEB SERVER   ----    Make calls to the database when required to get/update data for employees and returning JSON data to the client side
+	CLIENT SIDE   ----    Making API calls to the server and get data to render it on the webpage
+
+	Backend Technologies
+		- JAVA
+		- Spring MVC
+		- Hibernate
+		- Lombok
+		- JPA
+		- H2 Database
+		- Maven
+
+	Frontend Technologies
+		- HTML5
+		- CSS3/Bootstrap
+		- Babel
+		- ReactJS
+		- ToastrJS
+
+Data Model Design:
+
+	Employee
+		- Employee ID (Primary Key) - INTEGER
+		- Employee Name - VARCHAR(256)
+		- Role - VARCHAR(50)    (Normal/Admin)
+		- Username - VARCHAR(20)							// NOTE: NOT IN THE TABLE CURRENTLY
+		- Password - VARCHAR(20)							// NOTE: NOT IN THE TABLE CURRENTLY
+	Performance
+		- Given By - INTEGER (Foreign Key from Employee)
+		- Given To - INTEGER (Foreign Key from Employee)
+		- Feedback - VARCHAR(1000)
+		NOTE :  Given By and Given To will form a Primary Key for this table --- Composite Primary Key
+
+
+Server Side Design:
+
+	- The backend is built on Maven and Spring Boot for initializing the server.
+	- Since, I propose 2 Data tables, there are two POJO classes for Employee and Performance.
+	- Both the tables are connected by Foreign key constraints based out of Employee ID.
+	- I am using Lombok Framework to avoid writing all the getters and setters and hascode and equals implementation
+	- Using Spring and Hibernate JPA together to save the data on a Spring repository for both the Data Tables.
+	- Adding some raw/hard-coded data to the repository to get live data from the server for the front-end.
+	- These APIs are called from the front end and live data is served.
+
+Web-App Flow
+
+	- We have 2 views 
+
+		- Admin
+
+			- View shows the list of all the employees with their details
+
+			- Can Add/Update/View/Delete Employees. (WORKING DEMO OF DELETE IS IMPLEMENTED)
+
+			- Also, has a SELECT menu from where he can assign the selected employee to get reviewed from the other employee. (Not Working with backend - JUST THE UI IMPLEMENTATION)
+
+			- By clicking on the review button, that selected employee is added to the Performace table with the employee who has been asked to review him with an empty feedback. (NOT IMPLEMENTED WITH BACKEND --> Click Doesn't work)
+
+			- There is a View Employee Button which takes you to the Employee View Section where an employee can provide feedback for other employees present in his list for review.
+
+		- Employee
+
+			- The Home button on the top left corner, when clicked, takes you to the Admin View Page
+			
+			- Once you're on Employee view page, it shows the list of employees that are pending for review from the Logged in employee (Logged in feature not implemented)
+
+			- Clicking on Provide feedback button, shows an input text area where employee can write the feedback and submit it.
+
+			- Click Submit button and if call is successful to the server, it shows that the feedback has been submitted.
+
+Assumptions Made:
+
+	- 
+
+
+
+
+
+	
+

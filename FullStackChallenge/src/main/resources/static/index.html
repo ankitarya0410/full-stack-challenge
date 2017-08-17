@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Full Stack Challenge Paytm</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.3/toastr.min.css">
+</head>
+<body>
+<div id='root'></div>
+
+<script src="https://fb.me/react-15.0.1.js"></script>
+<script src="https://fb.me/react-dom-15.0.1.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-router/2.5.0/ReactRouter.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.3/toastr.min.js"></script>
+<script type="text/babel">
+
+    var hashHistory = ReactRouter.hashHistory;
+
+    var employeeFlag = false;
+    /**
+     * This class is responsible for showing/hiding the feedback input for the employee
+     * **/
+    var FeedbackBar = React.createClass({
+        getInitialState: function() {
+            return { hideFeedbackBar: false };
+        },
+        submitFeedback: function() {
+            this.setState({hideFeedbackBar: true});
+        },
+        render: function() {
+            var style= {
+                marginLeft: "20px",
+                display: "inline"
+            };
+                if (this.state.hideFeedbackBar) return (
+                    /**
+                     * Once we have a successful response from the server, we will show the message below.
+                     **/
+                        <div>Your feedback was successfully submitted. Thank you!</div>
+                );
+                else return (
+                    <div>
+                        <input placeholder="Provide feedback here..." />
+                        <button className="btn btn-info" style={style} onClick={this.submitFeedback}>Submit</button>
+                    </div>
+                );
+        }
+    });
+
+    /**
+     * This class is responsible for showing the names and provide the option of giving feedback of the employees who have to be reviewed from the logged in employee
+     * **/
+    var EmployeeName = React.createClass({
+        getInitialState: function() {
+            return { showFeedbackBar: false };
+        },
+        handleFeedback: function() {
+            this.setState({ showFeedbackBar: true });
+        },
+       render: function() {
+           return (
+               <tr>
+                   <td><span>{this.props.employee.name}</span></td>
+                   <td><button className="btn btn-info" onClick={this.handleFeedback}>Provide Feedback</button></td>
+                   <td>{ this.state.showFeedbackBar ? <FeedbackBar /> : null }</td>
+               </tr>
+           );
+       }
+    });
+
+    var EmployeeNamesList = React.createClass({
+        render: function() {
+            var names = [];
+            this.props.employees.forEach(function(employee) {
+                names.push(<EmployeeName employee={employee} />);
+            });
+
+             return (
+                    <div className="container">
+                        <table className="table table-striped">
+                            <thead>
+                            <tr>
+                                <th>Name</th>
+                            </tr>
+                            </thead>
+                            <tbody>{names}</tbody>
+                        </table>
+                    </div>
+            );
+        }
+    });
+
+    /**
+     * This class is responsible for fetching the names of employees who are to be reviewed from the server
+     * **/
+    var EmployeeView = React.createClass({
+
+        loadEmployeesFromServer: function () {
+            var self = this;
+            $.ajax({
+                url: "http://localhost:8080/api/employees"
+            }).then(function (data) {
+                self.setState({employees: data._embedded.employees});
+            });
+        },
+
+        getInitialState: function () {
+            return {employees: []};
+        },
+
+        componentDidMount: function () {
+            this.loadEmployeesFromServer();
+        },
+        render: function() {
+           return (
+                   <div className="container">
+                       <h2>Employee View</h2>
+                       <a href="/">
+                           <button className="btn btn-info">Home</button>
+                       </a>
+                       <EmployeeNamesList employees={this.state.employees}/>
+                   </div>
+           );
+       }
+    });
+
+    /**
+     * This class provides the selection menu on the Main page for ADMINS to assign an employee for the performance feedback
+     * **/
+    var Selection = React.createClass ({
+        handleChange: function(event){
+            this.setState({ value: event.target.value });
+        },
+        handleReview: function(event) {
+            event.preventDefault();
+            var newPerformance = {};
+            this.props.attributes.forEach(attribute => {
+                newPerformance[attribute] = ReactDOM.findDOMNode(this.refs[attribute]).value.trim();
+            });
+            this.props.onCreate(newPerformance);
+        },
+        onCreate: function(newPerformance) {
+            // TODO: It creates the entry in our Performance Data Table for the particular feedback combination i.e., which employee is providing feedback for whom.
+            /**
+             * This function/method is called when ADMIN click on the 'Review' button on the main screen
+             * It should add the employee to be reviewed to the list of the the employee who will provide the feedback
+             * **/
+        },
+        render: function () {
+            var options = [];
+            options.push(<option value="President Obama">President Obama</option>);
+            options.push(<option value="Crystal Mac">Crystal Mac</option>);
+            options.push(<option value="James Henry">James Henry</option>);
+            var style= {
+                marginLeft: "20px",
+                display: "inline"
+            };
+            return (
+                    <div>
+                        <select onChange={this.handleChange}>
+                            {options}
+                        </select>
+                        <button className="btn btn-info" style={style} onClick={this.handleReview}>Review</button>
+                    </div>
+            );
+        }
+    });
+
+
+    /**
+     * This class is responsible for showing the list of employees on the Main Page for ADMINS.
+     * ADMINS can assign ADD/UPDATE/DELETE/VIEW employees.
+     * Here, only DELETE functionality has been implemented.
+     * **/
+    var Employee = React.createClass({
+        getInitialState: function() {
+            return {display: true };
+        },
+        handleDelete() {
+            var self = this;
+            $.ajax({
+                url: self.props.employee._links.self.href,
+                type: 'DELETE',
+                success: function(result) {
+                    self.setState({display: false});
+                },
+                error: function(xhr, ajaxOptions, thrownError) {
+                    toastr.error(xhr.responseJSON.message);
+                }
+            });
+        },
+        handleUpdate() {
+            //TODO: This method will update employee info, if any made by ADMIN and write it to the database.
+        },
+        handleView() {
+            hashHistory.replace('/employee');
+        },
+        render: function() {
+            if (this.state.display==false) return null;
+            else return (
+                    <tr>
+                        <td>{this.props.employee.name}</td>
+                        <td>{this.props.employee.empId}</td>
+                        <td>{this.props.employee.role}</td>
+                        <td><button className="btn btn-info" onClick={this.handleDelete}>Delete</button></td>
+                        <td><button className="btn btn-info" onClick={this.handleUpdate}>Update</button></td>
+                        <td><Selection /></td>
+                        <td><button className="btn btn-info" onClick={this.handleView}>View Employee</button></td>
+                    </tr>
+            );
+        }
+    });
+
+    var AddEmployee = React.createClass({
+        getInitialState: function() {
+            return { hideAddEmployee: true, cancelForm: false };
+        },
+        submitInfo() {
+            //TODO: This method will make an AJAX call to the server with the USER INPUT Parameters and the details will be added to the Database as a new record in the Employee Table.
+            this.setState({ hideAddEmployee: false });
+            employeeFlag = false;
+        },
+        cancel() {
+            this.setState({ cancelForm: true });
+            this.setState({ hideAddEmployee: true });
+            employeeFlag = false;
+        },
+        render : function(){
+            var style = {
+                marginTop: "40px"
+            };
+            var style2 = {
+              marginLeft: "20px",
+              marginTop: "30px"
+            };
+            var style3 = {
+                marginLeft: "20px",
+                marginTop: "10px",
+                paddingBottom: "10px",
+                width: "100%"
+            };
+            if (this.state.hideAddEmployee && !employeeFlag) return null;
+            else if (!this.state.hideAddEmployee && !employeeFlag) return (
+                /**
+                 * Once we have a successful response from the server, we will show the message below.
+                 **/
+                    <div style={style}>Still not integrated with the server. Once integrated, employee details should be added.</div>
+            );
+            else return (
+                    <div style={style}>
+                        <input type="text" placeholder="Enter Name" style={style3} />
+                        <input type="text" placeholder="Enter Username" style={style3} />
+                        <input type="password" placeholder="Enter Password" style={style3} />
+                        <input type="password" placeholder="Confirm Password" style={style3} />
+                        <button className="btn btn-info" style={style2} onClick={this.submitInfo}>Submit</button>
+                        <button className="btn btn-cancel" style={style2} onClick={this.cancel}>Cancel</button>
+                    </div>
+            );
+        }
+    });
+
+    var EmployeeTable = React.createClass({
+        getInitialState: function() {
+            return { showAddEmployee: false };
+        },
+        addEmployee() {
+          //TODO: This method will make an AJAX call to the server with the USER INPUT Parameters and the details will be added to the Database as a new record in the Employee Table.
+            this.setState({ showAddEmployee: true });
+            employeeFlag = true;
+        },
+        render: function() {
+            var rows = [];
+            this.props.employees.forEach(function(employee) {
+                rows.push(<Employee employee={employee} />);
+            });
+            return (
+                    <div className="container">
+                        <h2>Admin View</h2>
+                        <table className="table table-striped">
+                            <thead>
+                            <tr>
+                                <th>Name</th><th>Employee ID</th><th>Role</th>
+                            </tr>
+                            </thead>
+                            <tbody>{rows}</tbody>
+                        </table>
+                        <button className="btn btn-info" onClick={this.addEmployee}>Add Employee</button>
+                        { employeeFlag ? <AddEmployee /> : null }
+                    </div>
+            );
+        }
+    });
+
+
+    /**
+     * This is our main REACT component where the initial call to server is happening for Employee details.
+     * **/
+    var App = React.createClass({
+
+        loadEmployeesFromServer: function () {
+            var self = this;
+            $.ajax({
+                url: "http://localhost:8080/api/employees"
+            }).then(function (data) {
+                self.setState({employees: data._embedded.employees});
+            });
+        },
+
+        getInitialState: function () {
+            return {employees: []};
+        },
+
+        componentDidMount: function () {
+            this.loadEmployeesFromServer();
+        },
+
+        render() {
+            return ( <EmployeeTable employees={this.state.employees}/> );
+        }
+    });
+
+    var routes = (
+            <ReactRouter.Router history={hashHistory}>
+                <ReactRouter.Route path="/" component={App}/>
+                <ReactRouter.Route path="/employee" component={EmployeeView}/>
+            </ReactRouter.Router>
+    );
+
+
+    ReactDOM.render(
+            <ReactRouter.Router>{routes}</ReactRouter.Router>,
+        document.getElementById('root')
+    );
+
+</script>
+</body>
+</html>
